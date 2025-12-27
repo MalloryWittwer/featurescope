@@ -26,21 +26,21 @@ class EmbeddedImageData(Base):
     id = Column(Integer, primary_key=True, index=True)
     image_data = Column(LargeBinary)
     thumbnail_data = Column(LargeBinary)
-    phi = Column(Float)
-    theta = Column(Float)
+    x_pos = Column(Float)
+    y_pos = Column(Float)
 
 
 class ThumbnailResponse(BaseModel):
     id: int
-    theta: float
-    phi: float
+    x_pos: float
+    y_pos: float
     thumbnail: str
 
 
 class ImageResponse(BaseModel):
     id: int
-    theta: float
-    phi: float
+    x_pos: float
+    y_pos: float
     image: str
 
 
@@ -74,8 +74,8 @@ def home():
 @app.post("/images/")
 async def upload_image(
     file: UploadFile = File(...),
-    theta: float = Form(...),
-    phi: float = Form(...),
+    x_pos: float = Form(...),
+    y_pos: float = Form(...),
     db: Session = Depends(get_db),
 ):
     image_data = await file.read()
@@ -91,8 +91,8 @@ async def upload_image(
     entry = EmbeddedImageData(
         image_data=image_data,
         thumbnail_data=thumbnail_data,
-        phi=phi,
-        theta=theta,
+        x_pos=x_pos,
+        y_pos=y_pos,
     )
     db.add(entry)
     db.commit()
@@ -107,8 +107,8 @@ async def get_thumbnails(db: Session = Depends(get_db)):
     content = [
         {
             "id": db_entry.id,
-            "theta": db_entry.theta,
-            "phi": db_entry.phi,
+            "x_pos": db_entry.x_pos,
+            "y_pos": db_entry.y_pos,
             "thumbnail": base64.b64encode(db_entry.thumbnail_data).decode('utf-8'),
         }
         for db_entry in db_entries
@@ -124,8 +124,8 @@ async def get_image(image_id: int, db: Session = Depends(get_db)):
     
     content = {
         "id": db_entry.id,
-        "theta": db_entry.theta,
-        "phi": db_entry.phi,
+        "x_pos": db_entry.x_pos,
+        "y_pos": db_entry.y_pos,
         "image": base64.b64encode(db_entry.image_data).decode('utf-8'),
     }
 
