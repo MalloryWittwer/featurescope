@@ -1,3 +1,0 @@
-from spherical_autoencoder.inference import TrainedSphericalEncoder, TrainedDinoV2SphericalEncoder
-from spherical_autoencoder.model import SphericalAutoencoder
-from spherical_autoencoder.dinov2_model import DinoV2SphericalAutoencoder
