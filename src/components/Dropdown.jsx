@@ -55,7 +55,7 @@ class Dropdown extends Component {
           onChange={this.handleUpdate}
           id="selector"
           name="selector"
-          defaultValue={this.props.defaultValue}
+          // defaultValue={this.props.defaultValue}
           menuPortalTarget={document.body} 
         />
       </div>

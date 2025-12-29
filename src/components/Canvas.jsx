@@ -46,23 +46,23 @@ class Canvas extends Component {
   };
 
   render() {
-    const { pointSize, pointDataCanvas } = this.props;
+    const { pointSize, displayDataSet } = this.props;
     const { toolTipImageUrl } = this.state;
-    if (pointDataCanvas) {
+    if (displayDataSet) {
       return (
         <div
           id="canvas"
           onMouseEnter={this.handleMouseEnter}
           onMouseLeave={this.handleMouseLeave}
         >
-          {pointDataCanvas.map((pointData) => {
-            const { id, xResized, yResized, thumbnail } = pointData;
+          {displayDataSet.map((pointData) => {
+            const { id, x, y, thumbnail } = pointData;
             return (
               <Point
                 actionFnct={this.setToolTipImageID}
                 key={id}
-                xPos={xResized}
-                yPos={yResized}
+                xPos={x}
+                yPos={y}
                 size={pointSize}
                 id={id}
                 thumbnail={thumbnail}

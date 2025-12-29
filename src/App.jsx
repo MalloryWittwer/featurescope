@@ -1,221 +1,178 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import Canvas from "./components/Canvas";
 import Dropdown from "./components/Dropdown";
-import { rotationMatrix } from "mathjs";
-import * as ut from "./utils";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       zoom: 300,
+      canvasSizeX: null,
+      canvasSizeY: null,
       pointSize: 18,
-      projectionTypeOptions: [
-        { value: "stereo", label: "Stereographic" },
-        { value: "ortho", label: "Orthographic" },
-        { value: "cylindre", label: "Cylindrical" },
-      ],
-      projectionType: "stereo",
-      rotMat: [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-      ],
-      pointDataSpherical: null,
-      pointDataCanvas: null,
-      pointDataXY: null,
+      featureOptions: [],
+      featureX: null,
+      featureY: null,
+      originalDataSet: null,
+      displayDataSet: null,
+      originX: 0,
+      originY: 0,
     };
   }
 
   fetchDataSet = () => {
-    fetch("http://localhost:8000/thumbnails/")
+    fetch("http://localhost:8000/dataset/")
       .then((r) => r.json())
-      .then((pointDataSpherical) => {
-        this.setState({ pointDataSpherical }, this.projectData);
+      .then((originalDataSet) => {
+        const excludeKeys = ["id", "image_file", "thumbnail"];
+        const featureOptions = Object.keys(originalDataSet)
+          .filter((key) => !excludeKeys.includes(key))
+          .map((key) => ({ value: key, label: key }));
+        this.setState({ originalDataSet, featureOptions }, this.updateDataDisplay);
       });
   };
 
-  setProjectionType = (projectionType) => {
-    this.setState({ projectionType }, this.projectData);
+  setFeatureX = (featureX) => {
+    this.setState({ featureX }, this.updateDataDisplay);
   };
 
-  handleMouseWheelEvent = (e) => {
-    const zoom = Math.max(150, this.state.zoom + e.deltaY);
+  setFeatureY = (featureY) => {
+    this.setState({ featureY }, this.updateDataDisplay);
+  };
+
+  onMouseWheel = (e) => {
+    const zoom = Math.max(300, this.state.zoom + e.deltaY);
     const pointSize = Number.parseInt(0.06 * zoom, 10);
-    this.setState({ zoom, pointSize }, this.handleZoomLevelChanged);
+    this.setState({ zoom, pointSize }, this.updateDataDisplay);
   };
 
-  handleZoomLevelChanged = () => {
-    const { zoom, canvasSizeX, canvasSizeY, pointDataXY } = this.state;
-    const pointDataCanvas = [];
-    for (const [, { id, x, y, thumbnail }] of Object.entries(pointDataXY)) {
-      const xResized = x * zoom + canvasSizeX / 2;
-      const yResized = y * zoom + canvasSizeY / 2;
-      if (
-        xResized >= 0 &&
-        yResized >= 0 &&
-        xResized <= canvasSizeX &&
-        yResized <= canvasSizeY
-      ) {
-        pointDataCanvas.push({ id, xResized, yResized, thumbnail });
-      }
+  updateDataDisplay = () => {
+    const { originalDataSet, canvasSizeX, canvasSizeY, zoom, featureX, featureY, originX, originY } = this.state;
+
+    if (!originalDataSet || !featureX || !featureY) {
+      return;
     }
-    this.setState({ pointDataCanvas });
-  };
 
-  projectData = () => {
-    const { pointDataSpherical, projectionType } = this.state;
-    const pointDataXY = [];
-    if (pointDataSpherical) {
-      for (const [, { id, theta, phi, thumbnail }] of Object.entries(pointDataSpherical)) {
-        let x, y;
-        switch (projectionType) {
-          case "ortho":
-            [x, y] = ut.orthoProjection([theta, phi]);
-            break;
-          case "stereo":
-            [x, y] = ut.stereoProjection(ut.spher2cart([theta, phi]));
-            break;
-          case "cylindre":
-            [x, y] = ut.equalAreaProjection([theta, phi]);
-            break;
-          default:
-            [x, y] = [0, 0];
-        }
-        pointDataXY.push({ id, x, y, thumbnail });
-      }
-      this.setState({ pointDataXY }, this.handleZoomLevelChanged);
+    const originalXPos = originalDataSet[featureX];
+    const originalYPos = originalDataSet[featureY];
+
+    if (!Array.isArray(originalXPos) || !Array.isArray(originalYPos)) {
+      return;
     }
+
+    const displayDataSet = [];
+    const len = Math.min(originalXPos.length, originalYPos.length);
+
+    for (let idx = 0; idx < len; idx++) {
+      const id = Array.isArray(originalDataSet.id) ? originalDataSet.id[idx] : originalDataSet.id;
+      const thumbnail = Array.isArray(originalDataSet.thumbnail) ? originalDataSet.thumbnail[idx] : originalDataSet.thumbnail;
+      const displayXPos = ((originalXPos[idx] + originX) * canvasSizeX - canvasSizeX / 2) * (zoom / 300) + canvasSizeX / 2;
+      const displayYPos = ((originalYPos[idx] + originY) * canvasSizeY - canvasSizeY / 2) * (zoom / 300) + canvasSizeY / 2;
+      displayDataSet.push({ id, x: displayXPos, y: displayYPos, thumbnail });
+    }
+
+    this.setState({ displayDataSet });
   };
 
-  getXYZ = (clickX, clickY) => {
-    const { zoom, canvasSizeX, canvasSizeY, projectionType } = this.state;
+  getXY = (clickX, clickY) => {
+    const { zoom, canvasSizeX, canvasSizeY } = this.state;
     const XY = [
-      (clickX - canvasSizeX / 2) / zoom,
-      (clickY - canvasSizeY / 2) / zoom,
+      ((clickX - canvasSizeX / 2) / (zoom / 300) + canvasSizeX / 2) / canvasSizeX,
+      ((clickY - canvasSizeY / 2) / (zoom / 300) + canvasSizeY / 2) / canvasSizeY,
     ];
-    let xyz;
-    switch (projectionType) {
-      case "ortho":
-        xyz = ut.spher2cart(ut.invOrthoProjection(XY));
-        break;
-      case "stereo":
-        xyz = ut.invStereoProjection(XY);
-        break;
-      case "cylindre":
-        xyz = ut.spher2cart(ut.invEqualAreaProjection(XY));
-        break;
-      default:
-        xyz = [];
-    }
-    return xyz;
+    return XY;
   };
 
-  handlePanViewEvent = (e) => {
-    const { moving, xyzOrigin, pointDataSpherical, rotMat } = this.state;
+  onPanView = (e) => {
+    const { moving, xyOrigin, originX, originY } = this.state;
     if (moving) {
       const micro = document.getElementById("tooltip");
       if (micro != null) {
         micro.classList.add("invisible");
       }
+      const xyOriginNew = this.getXY(e.clientX, e.clientY);
 
-      const xyz = this.getXYZ(e.clientX, e.clientY);
+      const [X1, Y1] = xyOriginNew;
+      const [X0, Y0] = xyOrigin;
 
-      if (ut.arraysEqual(xyz, xyzOrigin)) {
-        return;
-      }
-
-      const cvNormed = ut.crossVectorNormed(xyzOrigin, xyz);
-      const angle = ut.angleBetweenVectors(xyz, xyzOrigin);
-      const matrixR = rotationMatrix(angle, cvNormed);
-      const newRotMat = ut.matrixMul(matrixR, rotMat);
-
-      const newPointDataSpherical = [];
-      for (const [, { id, theta, phi, thumbnail }] of Object.entries(pointDataSpherical)) {
-        let newTheta, newPhi;
-        [newTheta, newPhi] = ut.cart2spher(
-          ut.matrixRot(matrixR, ut.spher2cart([theta, phi])),
-        );
-        newPointDataSpherical.push({
-          id: id,
-          theta: newTheta,
-          phi: newPhi,
-          thumbnail: thumbnail,
-        })
-      }
+      const newOriginX = originX + (X1 - X0);
+      const newOriginY = originY + (Y1 - Y0);
 
       this.setState(
         {
-          pointDataSpherical: newPointDataSpherical,
-          matrixR: matrixR,
-          xyzOrigin: xyz,
-          rotMat: newRotMat,
+          xyOrigin: xyOriginNew,
+          originX: newOriginX,
+          originY: newOriginY,
         },
-        this.projectData,
+        this.updateDataDisplay,
       );
     }
   };
 
-  downListener = (e) => {
+  onPointerDown = (e) => {
     document.getElementById("canvas").style.cursor = "grabbing";
-    const xyz = this.getXYZ(e.clientX, e.clientY);
-    this.setState({ moving: true, xyzOrigin: xyz });
+    const xy = this.getXY(e.clientX, e.clientY);
+    this.setState({ moving: true, xyOrigin: xy });
   };
 
-  upListener = (e) => {
+  onPointerUp = (e) => {
     e.preventDefault();
     document.getElementById("canvas").style.cursor = "grab";
     this.setState({ moving: false });
   };
 
-  adjustCanvasSize = () => {
+  onCanvasResize = () => {
     const canvas = document.getElementById("canvas");
     const rect = canvas.getBoundingClientRect();
     const canvasSizeX = rect.width;
     const canvasSizeY = rect.height;
-    this.setState({ canvasSizeX, canvasSizeY }, this.projectData);
+    this.setState({ canvasSizeX, canvasSizeY }, this.updateDataDisplay);
   };
 
   setupEventListeners = () => {
-    window.addEventListener("resize", this.adjustCanvasSize);
+    window.addEventListener("resize", this.onCanvasResize);
 
     document
       .getElementById("canvas")
-      .addEventListener("wheel", this.handleMouseWheelEvent, { passive: true });
+      .addEventListener("wheel", this.onMouseWheel, { passive: true });
 
     document
       .getElementById("canvas")
-      .addEventListener("pointerdown", this.downListener);
+      .addEventListener("pointerdown", this.onPointerDown);
 
     document
       .getElementById("canvas")
-      .addEventListener("pointermove", this.handlePanViewEvent);
+      .addEventListener("pointermove", this.onPanView);
 
     document
       .getElementById("canvas")
-      .addEventListener("pointerup", this.upListener);
+      .addEventListener("pointerup", this.onPointerUp);
   };
 
   componentDidMount = () => {
     this.fetchDataSet();
-    this.adjustCanvasSize();
+    this.onCanvasResize();
     this.setupEventListeners();
   };
 
   render = () => {
-    const { pointSize, pointDataCanvas, projectionTypeOptions } = this.state;
+    const { pointSize, displayDataSet, featureOptions } = this.state;
     return (
       <div className="App">
         <div className="canvas-wrapper">
-          <Canvas pointSize={pointSize} pointDataCanvas={pointDataCanvas} />
+          <Canvas pointSize={pointSize} displayDataSet={displayDataSet} />
         </div>
         <div className="side-pannel">
           <div className="dropdown-wrapper">
             <Dropdown
-              label={"Projection"}
-              options={projectionTypeOptions}
-              actionFnct={this.setProjectionType}
-              defaultValue={{ value: "stereo", label: "Stereographic" }}
+              label={"Feature 1 (X)"}
+              options={featureOptions}
+              actionFnct={this.setFeatureX}
+            />
+            <Dropdown
+              label={"Feature 2 (Y)"}
+              options={featureOptions}
+              actionFnct={this.setFeatureY}
             />
           </div>
         </div>
