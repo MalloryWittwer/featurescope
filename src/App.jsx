@@ -2,6 +2,8 @@ import { Component } from "react";
 import Canvas from "./components/Canvas";
 import Dropdown from "./components/Dropdown";
 
+import Papa from "papaparse";
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -17,19 +19,93 @@ class App extends Component {
       displayDataSet: null,
       originX: 0,
       originY: 0,
+      imageFileMap: null,
     };
   }
 
-  fetchDataSet = () => {
-    fetch("http://localhost:8000/dataset/")
-      .then((r) => r.json())
-      .then((originalDataSet) => {
-        const excludeKeys = ["id", "image_file", "thumbnail"];
-        const featureOptions = Object.keys(originalDataSet)
-          .filter((key) => !excludeKeys.includes(key))
-          .map((key) => ({ value: key, label: key }));
-        this.setState({ originalDataSet, featureOptions }, this.updateDataDisplay);
-      });
+  handleFolderUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    // Find CSV file in the selected folder
+    const csvFiles = files.filter((f) => {
+      const name = (f.name || "").toLowerCase();
+      return name.endsWith(".csv") || f.type === "text/csv";
+    });
+
+    if (csvFiles.length === 0) {
+      console.error("No CSV file found in the selected folder.");
+      e.target.value = "";
+      return;
+    }
+
+    if (csvFiles.length > 1) {
+      console.error(
+        `More than one CSV file found in the selected folder: ${csvFiles.map((f) => f.name).join(", ")}. Please keep only one CSV file.`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    const csvFile = csvFiles[0];
+
+    // Find images in the selected folder and map relative paths (example: "images/cat.png")
+    const imageFileMap = new Map();
+    for (const f of files) {
+
+      const isImage =
+        (f.type && f.type.startsWith("image/")) ||
+        /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(f.name);
+
+      if (!isImage) continue;
+
+      // Normalize slashes
+      const key = (f.webkitRelativePath || f.name).replaceAll("\\", "/");
+      imageFileMap.set(key, f);
+
+      // Also map by basename as a fallback
+      imageFileMap.set(f.name, f);
+    }
+
+    // Parse the CSV
+    Papa.parse(csvFile, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      complete: (results) => {
+        const rows = results.data;
+
+        // If headers are missing / weird, results.meta.fields can help debug
+        const originalDataSet = this.rowsToColumnObject(rows);
+        const featureOptions = this.buildFeatureOptions(originalDataSet);
+
+        this.setState({ originalDataSet, featureOptions, imageFileMap }, this.updateDataDisplay);
+      },
+      error: (err) => {
+        console.error("CSV parse error:", err);
+      },
+    });
+
+    // Allow re-selecting same folder
+    e.target.value = "";
+  };
+
+  buildFeatureOptions = (originalDataSet) => {
+    const excludeKeys = ["id", "image_file", "thumbnail"];
+    return Object.keys(originalDataSet)
+      .filter((key) => !excludeKeys.includes(key))
+      .map((key) => ({ value: key, label: key }));
+  };
+
+  rowsToColumnObject = (rows) => {
+    if (!rows.length) return {};
+    const cols = Object.keys(rows[0]);
+    const out = {};
+    for (const c of cols) out[c] = [];
+    for (const row of rows) {
+      for (const c of cols) out[c].push(row[c] ?? null);
+    }
+    return out;
   };
 
   setFeatureX = (featureX) => {
@@ -150,19 +226,26 @@ class App extends Component {
   };
 
   componentDidMount = () => {
-    this.fetchDataSet();
     this.onCanvasResize();
     this.setupEventListeners();
   };
 
   render = () => {
-    const { pointSize, displayDataSet, featureOptions } = this.state;
+    const { pointSize, displayDataSet, originalDataSet, featureOptions, imageFileMap } = this.state;
     return (
       <div className="App">
         <div className="canvas-wrapper">
-          <Canvas pointSize={pointSize} displayDataSet={displayDataSet} />
+          <Canvas
+            pointSize={pointSize}
+            displayDataSet={displayDataSet}
+            originalDataSet={originalDataSet}
+            imageFileMap={imageFileMap}
+          />
         </div>
         <div className="side-pannel">
+          <div className="folder-upload">
+            <input type="file" webkitdirectory="true" multiple onChange={this.handleFolderUpload} />
+          </div>
           <div className="dropdown-wrapper">
             <Dropdown
               label={"Feature 1 (X)"}

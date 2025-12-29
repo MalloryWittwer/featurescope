@@ -30,8 +30,6 @@ html {
   flex-direction: column;
   justify-content: space-around;
   align-items: center;
-
-  /* height: 100vh; */
 }
 
 .dropdown-wrapper {
@@ -39,6 +37,14 @@ html {
   flex-direction: column;
   margin: 10px 25px;
 }
+
+
+.folder-upload {
+  width: 100%;
+  max-width: 720px;
+  margin: 16px auto;
+}
+
 
 #canvas {
   height: 100vh;
@@ -178,3 +184,4 @@ h3 {
     order: 1;
   }
 }
+

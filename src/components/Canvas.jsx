@@ -1,11 +1,13 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import Point from "./Point";
 import Tooltip from "./Tooltip";
 
 class Canvas extends Component {
   constructor(props) {
     super(props);
-    this.state = { toolTipImageUrl: null };
+    this.state = {
+      toolTipImageUrl: null,
+    };
   }
 
   keyPressListener = (e) => {
@@ -28,21 +30,53 @@ class Canvas extends Component {
     document.removeEventListener("keyup", this.keyUpListener);
   };
 
-  fetchToolTipImage = async (imageID) => {
-    if (!imageID) {
-      return;
-    }
-    fetch(`http://localhost:8000/images/${imageID}`)
-      .then((r) => r.json())
-      .then((content) => {
-        const imageUrl = `data:image/png;base64,${content.image}`;
-        this.setState({ toolTipImageUrl: imageUrl });
-      });
+  getRowIndexById = (id) => {
+    const { originalDataSet } = this.props;
+    const ids = originalDataSet?.id;
+    if (!ids) return -1;
+    // Ensure number comparison if ids are numbers
+    return ids.findIndex((x) => Number(x) === Number(id));
   };
 
-  setToolTipImageID = (toolTipImageID) => {
-    const toolTipImageUrl = this.fetchToolTipImage(toolTipImageID);
-    this.setState({ toolTipImageUrl });
+  setToolTipImageFromLocalFiles = async (imageID) => {
+    if (!imageID) return;
+
+    // const { imageFileMap } = this.state;
+    const { originalDataSet, imageFileMap } = this.props;
+
+    if (!originalDataSet || !imageFileMap) return;
+
+    const rowIdx = this.getRowIndexById(imageID);
+    if (rowIdx < 0) {
+      console.warn("Image ID not found in dataset:", imageID);
+      return;
+    }
+
+    const imagePathFromCsv = originalDataSet.image_file?.[rowIdx];
+    if (!imagePathFromCsv) return;
+
+    // IMPORTANT: CSV path must match how you keyed files.
+    // Best practice: store relative paths in CSV (e.g. "images/cat.png"), not absolute OS paths.
+    const normalized = String(imagePathFromCsv).replaceAll("\\", "/");
+
+    const file =
+      imageFileMap.get(normalized) ||
+      imageFileMap.get(normalized.split("/").pop()); // basename fallback
+
+    if (!file) {
+      console.warn("No matching uploaded file for path:", normalized);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+
+    // Clean up previous blob URL to avoid leaks
+    const prev = this.state.toolTipImageUrl;
+    if (typeof prev === "string" && prev.startsWith("blob:")) {
+      URL.revokeObjectURL(prev);
+    }
+
+    this.setState({ toolTipImageUrl: url });
   };
 
   render() {
@@ -59,7 +93,7 @@ class Canvas extends Component {
             const { id, x, y, thumbnail } = pointData;
             return (
               <Point
-                actionFnct={this.setToolTipImageID}
+                actionFnct={this.setToolTipImageFromLocalFiles}
                 key={id}
                 xPos={x}
                 yPos={y}
