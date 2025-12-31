@@ -1,0 +1,18 @@
+#canvas {
+    height: 100vh;
+    /* height: 100%; */
+    overflow: hidden;
+    width: 100%;
+    background-color: aliceblue;
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+    border: 10px solid black;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) {
+    #canvas {
+        height: 60vh;
+    }
+}

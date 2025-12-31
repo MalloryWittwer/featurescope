@@ -1,5 +1,5 @@
 import "./point.css";
-import React, { Component } from "react";
+import { Component } from "react";
 
 class Point extends Component {
   handleMouseEnter = (e) => {

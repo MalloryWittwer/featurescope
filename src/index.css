@@ -36,25 +36,7 @@ html {
   display: flex;
   flex-direction: column;
   margin: 10px 25px;
-}
-
-
-.folder-upload {
-  width: 100%;
-  max-width: 720px;
-  margin: 16px auto;
-}
-
-
-#canvas {
-  height: 100vh;
-
-  overflow: hidden;
-  width: 100%;
-  background-color: aliceblue;
-  position: relative;
-  cursor: grab;
-  touch-action: none;
+  width: 90%;
 }
 
 .zoom-wrapper {
@@ -154,10 +136,6 @@ h3 {
     flex-direction: column;
   }
 
-  #canvas {
-    height: 60vh;
-  }
-
   .predictions-list-wrapper {
     display: none;
   }
@@ -184,4 +162,3 @@ h3 {
     order: 1;
   }
 }
-

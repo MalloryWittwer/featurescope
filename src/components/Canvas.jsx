@@ -1,3 +1,4 @@
+import "./canvas.css"
 import { Component } from "react";
 import Point from "./Point";
 import Tooltip from "./Tooltip";

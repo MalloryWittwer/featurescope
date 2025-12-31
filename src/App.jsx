@@ -1,112 +1,32 @@
 import { Component } from "react";
 import Canvas from "./components/Canvas";
 import Dropdown from "./components/Dropdown";
-
-import Papa from "papaparse";
+import DropArea from "./components/DropArea";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       zoom: 300,
+      zoomRel: 1.0,
+      pointSize: 18,
       canvasSizeX: null,
       canvasSizeY: null,
-      pointSize: 18,
-      featureOptions: [],
-      featureX: null,
-      featureY: null,
-      originalDataSet: null,
-      displayDataSet: null,
       originX: 0,
       originY: 0,
+      featureX: null,
+      featureY: null,
+      featureOptions: [],
+      originalDataSet: null,
+      displayDataSet: null,
       imageFileMap: null,
+      xyClick01: [],
     };
   }
 
-  handleFolderUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    // Find CSV file in the selected folder
-    const csvFiles = files.filter((f) => {
-      const name = (f.name || "").toLowerCase();
-      return name.endsWith(".csv") || f.type === "text/csv";
-    });
-
-    if (csvFiles.length === 0) {
-      console.error("No CSV file found in the selected folder.");
-      e.target.value = "";
-      return;
-    }
-
-    if (csvFiles.length > 1) {
-      console.error(
-        `More than one CSV file found in the selected folder: ${csvFiles.map((f) => f.name).join(", ")}. Please keep only one CSV file.`
-      );
-      e.target.value = "";
-      return;
-    }
-
-    const csvFile = csvFiles[0];
-
-    // Find images in the selected folder and map relative paths (example: "images/cat.png")
-    const imageFileMap = new Map();
-    for (const f of files) {
-
-      const isImage =
-        (f.type && f.type.startsWith("image/")) ||
-        /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(f.name);
-
-      if (!isImage) continue;
-
-      // Normalize slashes
-      const key = (f.webkitRelativePath || f.name).replaceAll("\\", "/");
-      imageFileMap.set(key, f);
-
-      // Also map by basename as a fallback
-      imageFileMap.set(f.name, f);
-    }
-
-    // Parse the CSV
-    Papa.parse(csvFile, {
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: true,
-      complete: (results) => {
-        const rows = results.data;
-
-        // If headers are missing / weird, results.meta.fields can help debug
-        const originalDataSet = this.rowsToColumnObject(rows);
-        const featureOptions = this.buildFeatureOptions(originalDataSet);
-
-        this.setState({ originalDataSet, featureOptions, imageFileMap }, this.updateDataDisplay);
-      },
-      error: (err) => {
-        console.error("CSV parse error:", err);
-      },
-    });
-
-    // Allow re-selecting same folder
-    e.target.value = "";
-  };
-
-  buildFeatureOptions = (originalDataSet) => {
-    const excludeKeys = ["id", "image_file", "thumbnail"];
-    return Object.keys(originalDataSet)
-      .filter((key) => !excludeKeys.includes(key))
-      .map((key) => ({ value: key, label: key }));
-  };
-
-  rowsToColumnObject = (rows) => {
-    if (!rows.length) return {};
-    const cols = Object.keys(rows[0]);
-    const out = {};
-    for (const c of cols) out[c] = [];
-    for (const row of rows) {
-      for (const c of cols) out[c].push(row[c] ?? null);
-    }
-    return out;
-  };
+  onDropAreaTriggered = (imageFileMap, originalDataSet, featureOptions) => {
+    this.setState({ imageFileMap, originalDataSet, featureOptions });
+  }
 
   setFeatureX = (featureX) => {
     this.setState({ featureX }, this.updateDataDisplay);
@@ -116,14 +36,30 @@ class App extends Component {
     this.setState({ featureY }, this.updateDataDisplay);
   };
 
-  onMouseWheel = (e) => {
-    const zoom = Math.max(300, this.state.zoom + e.deltaY);
-    const pointSize = Number.parseInt(0.06 * zoom, 10);
-    this.setState({ zoom, pointSize }, this.updateDataDisplay);
-  };
+  originToDisplay = (originalPosX, originalPosY) => {
+    const { zoomRel, originX, originY, canvasSizeX, canvasSizeY } = this.state;
+    const displayArr = [
+      ((originalPosX + originX) * canvasSizeX - canvasSizeX / 2) * zoomRel + canvasSizeX / 2,
+      ((originalPosY + originY) * canvasSizeY - canvasSizeY / 2) * zoomRel + canvasSizeY / 2
+    ];
+    return displayArr;
+  }
+
+  displayToOrigin = (displayPosX, displayPosY) => {
+    const { zoomRel, canvasSizeX, canvasSizeY } = this.state;
+    const originXYArr = [
+      ((displayPosX - canvasSizeX / 2) / zoomRel + canvasSizeX / 2) / canvasSizeX,
+      ((displayPosY - canvasSizeY / 2) / zoomRel + canvasSizeY / 2) / canvasSizeY,
+    ];
+    return originXYArr;
+  }
 
   updateDataDisplay = () => {
-    const { originalDataSet, canvasSizeX, canvasSizeY, zoom, featureX, featureY, originX, originY } = this.state;
+    const {
+      originalDataSet,
+      featureX,
+      featureY,
+    } = this.state;
 
     if (!originalDataSet || !featureX || !featureY) {
       return;
@@ -140,55 +76,71 @@ class App extends Component {
     const len = Math.min(originalXPos.length, originalYPos.length);
 
     for (let idx = 0; idx < len; idx++) {
+      const [displayXPos, displayYPos] = this.originToDisplay(originalXPos[idx], originalYPos[idx]);
       const id = Array.isArray(originalDataSet.id) ? originalDataSet.id[idx] : originalDataSet.id;
       const thumbnail = Array.isArray(originalDataSet.thumbnail) ? originalDataSet.thumbnail[idx] : originalDataSet.thumbnail;
-      const displayXPos = ((originalXPos[idx] + originX) * canvasSizeX - canvasSizeX / 2) * (zoom / 300) + canvasSizeX / 2;
-      const displayYPos = ((originalYPos[idx] + originY) * canvasSizeY - canvasSizeY / 2) * (zoom / 300) + canvasSizeY / 2;
       displayDataSet.push({ id, x: displayXPos, y: displayYPos, thumbnail });
     }
 
     this.setState({ displayDataSet });
   };
 
-  getXY = (clickX, clickY) => {
-    const { zoom, canvasSizeX, canvasSizeY } = this.state;
-    const XY = [
-      ((clickX - canvasSizeX / 2) / (zoom / 300) + canvasSizeX / 2) / canvasSizeX,
-      ((clickY - canvasSizeY / 2) / (zoom / 300) + canvasSizeY / 2) / canvasSizeY,
-    ];
-    return XY;
+  resetDisplayBounds = () => {
+    const { originX, originY, canvasSizeX, canvasSizeY } = this.state;
+
+    const [canvasLimitX0, canvasLimitY0] = this.displayToOrigin(0, 0);
+    const [canvasLimitX1, canvasLimitY1] = this.displayToOrigin(canvasSizeX, canvasSizeY);
+    const clX0 = canvasLimitX0 - originX;
+    const clY0 = canvasLimitY0 - originY;
+    const clX1 = canvasLimitX1 - originX;
+    const clY1 = canvasLimitY1 - originY;
+
+    let noX = originX;
+    let noY = originY;
+    if (clX0 <= 0) {
+      noX = canvasLimitX0;
+    }
+    if (clY0 <= 0) {
+      noY = canvasLimitY0;
+    }
+    if (clX1 > 1) {
+      noX = canvasLimitX1 - 1;
+    }
+    if (clY1 > 1) {
+      noY = canvasLimitY1 - 1;
+    }
+    this.setState({ originX: noX, originY: noY }, this.updateDataDisplay)
+  };
+
+  onMouseWheel = (e) => {
+    const zoom = Math.max(300, this.state.zoom + e.deltaY);
+    const zoomRel = zoom / 300;
+    const pointSize = Number.parseInt(0.06 * zoom, 10);
+    this.setState({ zoom, zoomRel, pointSize }, this.resetDisplayBounds);
   };
 
   onPanView = (e) => {
-    const { moving, xyOrigin, originX, originY } = this.state;
+    const { moving, xyClick01, originX, originY } = this.state;
     if (moving) {
       const micro = document.getElementById("tooltip");
       if (micro != null) {
         micro.classList.add("invisible");
       }
-      const xyOriginNew = this.getXY(e.clientX, e.clientY);
-
-      const [X1, Y1] = xyOriginNew;
-      const [X0, Y0] = xyOrigin;
+      const xyClickNew01 = this.displayToOrigin(e.clientX, e.clientY);
+      const [X1, Y1] = xyClickNew01;
+      const [X0, Y0] = xyClick01;
 
       const newOriginX = originX + (X1 - X0);
       const newOriginY = originY + (Y1 - Y0);
 
-      this.setState(
-        {
-          xyOrigin: xyOriginNew,
-          originX: newOriginX,
-          originY: newOriginY,
-        },
-        this.updateDataDisplay,
-      );
+      this.setState({ originX: newOriginX, originY: newOriginY, xyClick01: xyClickNew01 }, this.resetDisplayBounds);
     }
   };
 
   onPointerDown = (e) => {
     document.getElementById("canvas").style.cursor = "grabbing";
-    const xy = this.getXY(e.clientX, e.clientY);
-    this.setState({ moving: true, xyOrigin: xy });
+    const xyClickNew01 = this.displayToOrigin(e.clientX, e.clientY);
+    this.setState({ moving: true, xyClick01: xyClickNew01 });
   };
 
   onPointerUp = (e) => {
@@ -231,7 +183,14 @@ class App extends Component {
   };
 
   render = () => {
-    const { pointSize, displayDataSet, originalDataSet, featureOptions, imageFileMap } = this.state;
+    const {
+      pointSize,
+      displayDataSet,
+      originalDataSet,
+      featureOptions,
+      imageFileMap,
+    } = this.state;
+
     return (
       <div className="App">
         <div className="canvas-wrapper">
@@ -243,10 +202,10 @@ class App extends Component {
           />
         </div>
         <div className="side-pannel">
-          <div className="folder-upload">
-            <input type="file" webkitdirectory="true" multiple onChange={this.handleFolderUpload} />
-          </div>
           <div className="dropdown-wrapper">
+            <DropArea
+              actionFnct={this.onDropAreaTriggered}
+            />
             <Dropdown
               label={"Feature 1 (X)"}
               options={featureOptions}
