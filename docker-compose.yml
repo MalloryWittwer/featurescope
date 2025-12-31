@@ -1,16 +1,6 @@
 services:
-  backend:
-    build:
-      context: ./spheriscope-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - THUMBNAIL_SIZE=64
-
   frontend:
     build:
       context: ./
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
