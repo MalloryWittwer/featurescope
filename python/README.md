@@ -1,53 +1,129 @@
-# FeatureScope (Python package)
+# 🫧 FeatureScope: Image Feature Visualization
 
-This package provides a function `apply_featurizer` to compute custom features on images contained in a folder, so that these images and features can be visualized with the featurescope.
+https://github.com/user-attachments/assets/d14add7f-7124-4bd7-b960-313e480738c3
+> 👆🏼 Jellyfish dataset from [Kaggle](https://www.kaggle.com/datasets/anshtanwar/jellyfish-types); features extracted with [DinoV2](https://github.com/facebookresearch/dinov2) and projected using PCA. You can [download](https://github.com/MalloryWittwer/featurescope/releases) this example and try it yourself!
 
-**Example**
+The **FeatureScope** helps you understand how numerical features are distributed in an image dataset.
 
-We have a local folder of images:
+- Choose which features to plot in X and Y in the 2D interactive plane.
+- Explore the data interactively by zooming in an out and viewing images.
+
+Image features can be any numerical values associated with images, such as measurements, embedding values, or numerical outputs from image analysis algorithms.
+
+All data remains local. The images are only uploaded to your web browser's internal storage.
+
+> [!NOTE]
+> Looking for the initial project, *Spheriscope*? You can find it on the [spheriscope](https://github.com/MalloryWittwer/spheriscope/tree/spheriscope) branch. However, we're not planning to develop this project further at the moment as we think the *featurescope* is applicable more broadly and easier to use.
+
+## Installation
+
+You can install the `featurescope` Python package using `pip`:
+
+```sh
+pip install featurescope
+```
+
+or clone this repository and install the development version:
+
+```sh
+git clone https://github.com/MalloryWittwer/featurescope.git
+cd featurescope
+pip install -e python
+```
+
+## Usage
+
+### Image Dataset
+
+- Your images should be in `PNG`, `JPEG` or `TIFF` format.
+- They should be located in the same folder.
+
+For example:
 
 ```
-/mnist
-   01.png
-   02.png
-   ...
+images/
+├── img1.png
+├── img2.png
+├── ...
 ```
 
-and a featurizer function in Python:
+### Featurizer
+
+You should define a **featurizer** function in Python. This function will be applied to all images in the dataset in order to extract the features.
+
+**Constraints**
+
+- The featurizer function must take an `image` NumPy array a its first input.
+- The function must return a Python dictionary of numerical image features. 
+
+For example:
 
 ```python
-def mnist_featurizer(image: np.ndarray) -> Dict:
+def minmax_featurizer(image: np.ndarray) -> Dict:
+    image_min = image.max()
+    image_max = image.max()
     return {
-        "mean": np.mean(image),
-        "max": np.max(image),
-        "min": np.min(image),
+        "min": image_min,
+        "max": image_max
     }
 ```
 
-then, we can use:
+### Computing Features
+
+Use `apply_featurizer` to compute the features for all images in your dataset. The results are aggregated and saved as a CSV file named `dataset.csv` in the images folder.
 
 ```python
 from featurescope import apply_featurizer
 
-apply_featurizer(mnist_featurizer, images_dir="./mnist")
+apply_featurizer(minmax_featurizer, images_dir="/path/to/images")
 ```
 
-Running `apply_featurizer` will load, and apply the featurizer function to all images in the folder, and save a CSV file `dataset.csv` in that same folder.
+Running `apply_featurizer` will loop over all image files in `images_dir` to load the images and compute the features. At the end of the process, the results are saved as `dataset.csv`:
 
 ```
-/mnist
-   01.png
-   02.png
-   ...
-   dataset.csv  <- Contains the computed image features!
+images/
+├── img1.png
+├── img2.png
+├── ...
+├── dataset.csv  <- Contains the computed features
 ```
 
-With the features computed and stored, the folder `/mnist` can be dropped in the [featurescope app](https://mallorywittwer.github.io/featurescope/) in a web browser for visualization.
+### Visualization
 
-## Installation
+With your `dataset.csv` in the images folder, you can now drag and drop this folder into the front-end app for visualization.
 
-From PyPi:
+- In a web browser, navigate to https://mallorywittwer.github.io/featurescope/.
+- Load the folder containing the images and the `dataset.csv` file by dropping it into the drag-and-drop area.
 
-```bash
-pip install featurescope
+That's it! You should now be able to browse and visualize your images and features. 🎉
+
+### Does the data remain local?
+
+Yes! Your images **remain local** (they are *not* uploaded to a remote server) even if you access the front-end app via a public URL. Your images and features are simply uploaded to your web browser's internal storage. If you reload the page, everything should be cleaned up and reset!
+
+## License
+
+This software is distributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license.
+
+<!-- ## Citing
+
+[![DOI](https://zenodo.org/badge/912741131.svg)](https://doi.org/10.5281/zenodo.15673151)
+
+If you use the FeatureScope in the context of scientific publication, you can cite it as below.
+
+BibTeX:
+
 ```
+@software{mallory_wittwer_2025_15673152,
+  author       = {Mallory Wittwer},
+  title        = {MalloryWittwer/featurescope: v0.0.1},
+  url          = {https://doi.org/10.5281/zenodo.15673152},
+  doi          = {10.5281/zenodo.15673152},
+  version      = {v0.0.1},
+  year         = 2026,
+}
+``` -->
+
+## Issues
+
+If you encounter any problems, please file an issue along with a detailed description.
