@@ -1,6 +1,6 @@
 # 🫧 FeatureScope: Image Feature Visualization Toolbox
 
-<!-- https://github.com/user-attachments/assets/dee8edab-370e-46ea-97dc-73640a689e3a -->
+https://github.com/user-attachments/assets/d14add7f-7124-4bd7-b960-313e480738c3
 
 The **FeatureScope** helps you understand how numerical features are distributed in an image dataset.
 
