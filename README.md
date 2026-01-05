@@ -17,8 +17,8 @@ This project consists of three main components:
 To use *Spheriscope*, clone the repository and navigate into the project directory:
 
 ```sh
-git clone https://github.com/MalloryWittwer/spheriscope.git
-cd spheriscope
+git clone -b spheriscope https://github.com/MalloryWittwer/featurescope.git
+cd featurescope
 ```
 
 ### Step 1: Prepare an Image Dataset
