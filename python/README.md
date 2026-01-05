@@ -1,5 +1,7 @@
 # 🫧 FeatureScope: Image Feature Visualization
 
+[![DOI](https://zenodo.org/badge/465379841.svg)](https://doi.org/10.5281/zenodo.18154793)
+
 https://github.com/user-attachments/assets/d14add7f-7124-4bd7-b960-313e480738c3
 > 👆🏼 Jellyfish dataset from [Kaggle](https://www.kaggle.com/datasets/anshtanwar/jellyfish-types); features extracted with [DinoV2](https://github.com/facebookresearch/dinov2) and projected using PCA. You can [download](https://github.com/MalloryWittwer/featurescope/releases) this example and try it yourself!
 
@@ -104,25 +106,6 @@ Yes! Your images **remain local** (they are *not* uploaded to a remote server) e
 ## License
 
 This software is distributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license.
-
-<!-- ## Citing
-
-[![DOI](https://zenodo.org/badge/912741131.svg)](https://doi.org/10.5281/zenodo.15673151)
-
-If you use the FeatureScope in the context of scientific publication, you can cite it as below.
-
-BibTeX:
-
-```
-@software{mallory_wittwer_2025_15673152,
-  author       = {Mallory Wittwer},
-  title        = {MalloryWittwer/featurescope: v0.0.1},
-  url          = {https://doi.org/10.5281/zenodo.15673152},
-  doi          = {10.5281/zenodo.15673152},
-  version      = {v0.0.1},
-  year         = 2026,
-}
-``` -->
 
 ## Issues
 
