@@ -94,13 +94,13 @@ class Canvas extends Component {
             const { id, x, y, thumbnail } = pointData;
             return (
               <Point
-                actionFnct={this.setToolTipImageFromLocalFiles}
-                key={id}
-                xPos={x}
-                yPos={y}
-                size={pointSize}
-                id={id}
-                thumbnail={thumbnail}
+              actionFnct={this.setToolTipImageFromLocalFiles}
+              key={id}
+              xPos={x}
+              yPos={y}
+              size={pointSize}
+              id={id}
+              thumbnail={thumbnail}
               />
             );
           })}

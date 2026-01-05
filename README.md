@@ -1,36 +1,43 @@
-# 🫧 Spheriscope: A Toolbox for Visualizing Images on a Spherical Latent Space
+# 🫧 FeatureScope: Image Feature Visualization Toolbox
 
-https://github.com/user-attachments/assets/dee8edab-370e-46ea-97dc-73640a689e3a
+<!-- https://github.com/user-attachments/assets/dee8edab-370e-46ea-97dc-73640a689e3a -->
 
-**Spheriscope** is a web application designed to explore image datasets projected onto a spherical geometry using autoencoders. Images that are visually similar are positioned close to each other, while dissimilar images are farther apart.
+The **FeatureScope** helps you understand how numerical features are distributed in an image dataset.
 
-## Components
+- Choose which features to plot in X and Y in the 2D interactive plane.
+- Explore the data interactively by zooming in an out and viewing images.
 
-This project consists of three main components:
+Image features can be any numerical values associated with images, such as measurements, embedding values, or numerical outputs from image analysis algorithms.
 
-- [spherical-autoencoder](./spherical-autoencoder/): A package for training autoencoders with spherical latent spaces.
-- [spheriscope-backend](./spheriscope-backend/): The backend application built with [FastAPI](https://fastapi.tiangolo.com/) and [SQLite](https://www.sqlite.org/).
-- [spheriscope](./): The frontend application built with [React](https://react.dev/).
+All data remains local. The images are only uploaded to your web browser's internal storage.
+
+> [!NOTE]
+> Looking for the [*Spheriscope*]()? This project is...
+
+## Installation
+
+You can install the `featurescope` Python package using `pip`:
+
+```sh
+pip install featurescope
+```
+
+or clone this repository and install the development version:
+
+```sh
+git clone https://github.com/MalloryWittwer/featurescope.git
+cd featurescope
+pip install -e .
+```
 
 ## Usage
 
-To use *Spheriscope*, clone the repository and navigate into the project directory:
+### Image Dataset
 
-```sh
-git clone https://github.com/MalloryWittwer/spheriscope.git
-cd spheriscope
-```
+- Your images should be in `PNG`, `JPEG` or `TIFF` format.
+- They should be located in the same folder.
 
-### Step 1: Prepare an Image Dataset
-
-To get started, you need a **dataset of images**. You can use a subset of the [MNIST](https://search.brave.com/search?q=mnist&source=desktop) dataset as an example.
-
-Ensure that:
-
-- The images can be resized to **64x64 pixels** without losing significant visual quality. The autoencoder operates at this image size. If the images are not already this size, they will be resized internally by the autoencoder.
-- The images are **grayscale** with pixel values between 0 and 255. If the images are in RGB, they will be converted to grayscale.
-
-Save your images in PNG, JPG, or TIF format in a dataset folder. For example:
+For example:
 
 ```
 images/
@@ -39,58 +46,83 @@ images/
 ├── ...
 ```
 
-### Step 2: Train a Spherical Autoencoder
+### Featurizer
 
-Follow the [instructions](./spherical-autoencoder/README.md) to install the [spherical-autoencoder](./spherical-autoencoder/) Python package. Then, run the training script:
+You should define a **featurizer** function in Python. This function will be applied to all images in the dataset in order to extract the features.
 
-```sh
-spheriscope train <images_dir> <model_output_dir> --epochs 1000 --batch_size 32
+**Constraints**
+
+- The featurizer function must take an `image` NumPy array a its first input.
+- The function must return a Python dictionary of numerical image features. 
+
+For example:
+
+```python
+def minmax_featurizer(image: np.ndarray) -> Dict:
+    image_min = image.max()
+    image_max = image.max()
+    return {
+        "min": image_min,
+        "max": image_max
+    }
 ```
 
-This will save a model file `encoder.keras` in the specified output directory.
+### Computing Features
 
-### Step 3: Install and Run *Spheriscope*
+Use `apply_featurizer` to compute the features for all images in your dataset. The results are aggregated and saved as a CSV file named `dataset.csv` in the images folder.
 
-**Option 1: With Docker**
+```python
+from featurescope import apply_featurizer
 
-To install and run *Spheriscope* using [Docker Compose](https://docs.docker.com/compose/), run:
-
-```sh
-docker compose up
+apply_featurizer(minmax_featurizer, images_dir="/path/to/images")
 ```
 
-This will:
+Running `apply_featurizer` will loop over all image files in `images_dir` to load the images and compute the features. At the end of the process, the results are saved as `dataset.csv`:
 
-- Install and run the [spheriscope-backend](./spheriscope-backend/) on http://localhost:8000.
-- Install and run the frontend application on http://localhost:3000.
-
-**Option 2: Without Docker**
-
-To install the app without Docker, first install the Python packages listed in [requirements.txt](./spheriscope-backend/requirements.txt). Then, start the backend server on http://localhost:8000 using:
-
-```sh
-uvicorn main:app --port 8000
+```
+images/
+├── img1.png
+├── img2.png
+├── ...
+├── dataset.csv  <- Contains the computed features
 ```
 
-Next, install the frontend application from the root of the project using `npm install`, and start the app on http://localhost:3000 with:
+### Visualization
 
-```sh
-npm start
+With your `dataset.csv` in the images folder, you can now drag and drop this folder into the front-end app for visualization.
+
+- In a web browser, navigate to https://mallorywittwer.github.io/featurescope/.
+- Load the folder containing the images and the `dataset.csv` file by dropping it into the drag-and-drop area.
+
+That's it! You should now be able to browse and visualize your images and features. 🎉
+
+### Does the data remain local?
+
+Yes! Your images **remain local** (they are *not* uploaded to a remote server) even if you access the front-end app via a public URL. Your images and features are simply uploaded to your web browser's internal storage. If you reload the page, everything should be cleaned up and reset!
+
+## License
+
+This software is distributed under the terms of the [BSD-3](http://opensource.org/licenses/BSD-3-Clause) license.
+
+<!-- ## Citing
+
+[![DOI](https://zenodo.org/badge/912741131.svg)](https://doi.org/10.5281/zenodo.15673151)
+
+If you use the FeatureScope in the context of scientific publication, you can cite it as below.
+
+BibTeX:
+
 ```
+@software{mallory_wittwer_2025_15673152,
+  author       = {Mallory Wittwer},
+  title        = {MalloryWittwer/featurescope: v0.0.1},
+  url          = {https://doi.org/10.5281/zenodo.15673152},
+  doi          = {10.5281/zenodo.15673152},
+  version      = {v0.0.1},
+  year         = 2026,
+}
+``` -->
 
-### Step 4: Load Your Dataset and Visualize It
+## Issues
 
-Once *Spheriscope* is running, use the upload script to project all images from the dataset onto the autoencoder's spherical latent space and load them into the app's SQLite database:
-
-```sh
-spheriscope upload <images_dir> <model_output_dir>
-```
-
-After the command completes, reload the page at http://localhost:3000. You should see the projected image dataset 🎉.
-
-To stop the application, run:
-
-```sh
-docker compose down
-```
-
+If you encounter any problems, please file an issue along with a detailed description.

@@ -1,0 +1,48 @@
+[project]
+name = "featurescope"
+dynamic = ["version"]
+description = "FeatureScope Python Library."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Mallory Wittwer", email = "mallory.wittwer@epfl.ch" }]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "requests",
+    "Pillow",
+    "numpy",
+    "pandas",
+    "scikit-image",
+    "tqdm",
+]
+
+[project.urls]
+repository = "https://github.com/MalloryWittwer/featurescope"
+
+[build-system]
+requires = ["setuptools>=42.0.0", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+root = ".."
+relative_to = "pyproject.toml"
+write_to = "python/src/featurescope/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
