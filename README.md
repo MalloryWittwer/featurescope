@@ -1,6 +1,7 @@
-# 🫧 FeatureScope: Image Feature Visualization Toolbox
+# 🫧 FeatureScope: Image Feature Visualization
 
 https://github.com/user-attachments/assets/d14add7f-7124-4bd7-b960-313e480738c3
+> 👆🏼 Jellyfish dataset from [Kaggle](https://www.kaggle.com/datasets/anshtanwar/jellyfish-types); features extracted with [DinoV2](https://github.com/facebookresearch/dinov2) and projected using PCA. You can [download](https://github.com/MalloryWittwer/featurescope/releases) this example and try it yourself!
 
 The **FeatureScope** helps you understand how numerical features are distributed in an image dataset.
 
