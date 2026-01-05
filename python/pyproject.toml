@@ -43,6 +43,6 @@ where = ["src"]
 [tool.setuptools_scm]
 root = ".."
 relative_to = "pyproject.toml"
-write_to = "python/src/featurescope/_version.py"
+version_file = "src/featurescope/_version.py"
 version_scheme = "guess-next-dev"
 local_scheme = "no-local-version"
