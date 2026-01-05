@@ -27,7 +27,7 @@ or clone this repository and install the development version:
 ```sh
 git clone https://github.com/MalloryWittwer/featurescope.git
 cd featurescope
-pip install -e .
+pip install -e python
 ```
 
 ## Usage
