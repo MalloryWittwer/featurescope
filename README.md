@@ -12,7 +12,7 @@ Image features can be any numerical values associated with images, such as measu
 All data remains local. The images are only uploaded to your web browser's internal storage.
 
 > [!NOTE]
-> Looking for the [*Spheriscope*]()? This project is...
+> Looking for the initial project, *Spheriscope*? You can find it on the [spheriscope](https://github.com/MalloryWittwer/spheriscope/tree/spheriscope) branch. However, we're not planning to develop this project further at the moment as we think the *featurescope* is applicable more broadly and easier to use.
 
 ## Installation
 
