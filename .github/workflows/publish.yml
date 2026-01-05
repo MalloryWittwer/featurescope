@@ -25,10 +25,11 @@ jobs:
           python -m pip install -U pip build
           python -m build python
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@v1.5.0
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.TWINE_API_KEY }}
+          packages-dir: python/dist/
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
