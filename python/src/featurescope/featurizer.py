@@ -12,40 +12,47 @@ from PIL import Image
 THUMBNAIL_SIZE = int(os.getenv("THUMBNAIL_SIZE", 64))
 
 
+def load_image(image_file: Union[Path, str]) -> Image.Image:
+    # Read the image using Pillow
+    image_path = Path(image_file)
+    if not image_path.exists():
+        raise FileNotFoundError(f"Image file does not exist: {image_path}")
+    try:
+        pil_image = Image.open(image_path)
+    except Exception as e:
+        raise OSError(f"Could not read image file {image_path}: {e}") from e
+
+    return pil_image
+
+
+def encode_thumbnail(pil_image: Image.Image) -> str:
+    # Compute an image thumbnail
+    thumbnail = pil_image.resize((THUMBNAIL_SIZE, THUMBNAIL_SIZE))
+
+    # Encode the thumbnail and store it in the CSV
+    output = io.BytesIO()
+    thumbnail.save(output, format="png")
+    thumbnail_data = output.getvalue()
+    encoded_thumbnail = base64.b64encode(thumbnail_data).decode("utf-8")
+    
+    return encoded_thumbnail
+
+
 class Featurizer:
     def __init__(self, func: Callable) -> None:
         self.func = func
-    
-    def featurize(self, image_file: Union[str, Path], **kwargs) -> pd.DataFrame:
-        # Sanitize the image file
-        image_path = Path(image_file)
-        if not image_path.exists():
-            raise FileNotFoundError(f"Image file does not exist: {image_path}")
-        
-        # Read the image into a numpy array using PIL
-        try:
-            pil_image = Image.open(image_file)
-        except Exception as e:  
-            raise OSError(f"Could not read image file {image_path}: {e}") from e
-        
+
+    def featurize(
+        self, pil_image: Union[Image.Image, np.ndarray], **kwargs
+    ) -> pd.DataFrame:
+        # Convert PIL => NumPy array
         image_arr = np.asarray(pil_image)
-        
+
         # Apply the featurizer function to the image
         df = self.func(image_arr, **kwargs)
-        
-        # Compute an image thumbnail
-        thumbnail = pil_image.resize((THUMBNAIL_SIZE, THUMBNAIL_SIZE))
-        
-        # Encode the thumbnail and store it in the CSV
-        output = io.BytesIO()
-        thumbnail.save(output, format=pil_image.format)
-        thumbnail_data = output.getvalue()
-        encoded_thumbnail = base64.b64encode(thumbnail_data).decode('utf-8')
-        
-        df["thumbnail"] = encoded_thumbnail
-        
+
         return df
-    
+
     @classmethod
     def normalize(cls, df: pd.DataFrame) -> pd.DataFrame:
         """Apply a min-max normalization to the numeric columns of the provided DataFrame."""
@@ -64,5 +71,14 @@ class Featurizer:
         ranges = ranges.replace(0, 1)
 
         df_normed[numeric_cols] = (df_normed[numeric_cols] - mins) / ranges
+        
+        # Add the image ID
+        df_normed["id"] = df_normed.index
+        
+        # Keep only numeric columns + thumbnail and image_file columns
+        numeric_cols = df_normed.select_dtypes(include=[np.number]).columns
+        df_normed_numeric = df_normed[numeric_cols].copy()
+        df_normed_numeric["thumbnail"] = df_normed["thumbnail"]
+        df_normed_numeric["image_file"] = df_normed["image_file"]
 
-        return df_normed
+        return df_normed_numeric

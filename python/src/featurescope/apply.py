@@ -4,7 +4,7 @@ from typing import Callable, Union
 import pandas as pd
 from tqdm import tqdm
 
-from .featurizer import Featurizer
+from featurescope.featurizer import Featurizer, encode_thumbnail, load_image
 
 
 VALID_IMAGE_FORMATS = ["tif", "tiff", "png", "jpeg", "jpg"]
@@ -15,14 +15,14 @@ def apply_featurizer(
 ) -> Path:
     """
     Apply a featurizer function to all images in a specified directory. Save the results as a CSV file in the image directory.
-    
+
     The featurizer function must have the following signature:
         1. It must take an `image` NumPy array as input (and possibly other arguments). The image array should be readable from a file by Pillow's Image.open function.
         2. It must return a Python dictionary of numeric image features for the image.
-        
+
     Example featurizer function:
     ============================
-    
+
     def simple_featurizer(image: np.ndarray) -> Dict:
         image_mean = np.mean(image)
         image_max = image.max()
@@ -43,7 +43,7 @@ def apply_featurizer(
     # List image files in the folder
     images_path = Path(images_dir)
     image_files = list(images_path.iterdir())
-    
+
     # Filter image files:
     valid_image_files = []
     valid_formats = []
@@ -59,12 +59,11 @@ def apply_featurizer(
             other_files.append(f)
             if extension not in invalid_formats:
                 invalid_formats.append(extension)
-    
+
     n_valid_files = len(valid_image_files)
     if n_valid_files == 0:
-        print("No valid image files found in this folder.")
-        return
-    
+        raise RuntimeError("No valid image files found in this folder.")
+
     print(f"{n_valid_files} valid image files found ({valid_formats}).")
     print(f"{len(other_files)} other files found ({invalid_formats}).")
 
@@ -74,20 +73,20 @@ def apply_featurizer(
     for image_file in tqdm(
         valid_image_files, total=len(valid_image_files), desc="Applying featurizer"
     ):
-        records.append(featurizer.featurize(image_file, **featurizer_kwargs))
-    
+        pil_image = load_image(image_file)
+        df = featurizer.featurize(pil_image, **featurizer_kwargs)
+        df["thumbnail"] = encode_thumbnail(pil_image)
+        records.append(df)
+
     for key in list(records[0].keys()):
         df[key] = [record[key] for record in records]
-    
-    # Normalize the DataFrame
-    df_normed = Featurizer.normalize(df)
 
-    # Add the image ID
-    df_normed["id"] = df_normed.index
+    # Normalize the DataFrame
+    df_normed = Featurizer.normalize(df)   
 
     # Save the dataframe as CSV
     csv_path = images_path / "dataset.csv"
     df_normed.to_csv(csv_path)
     print(f"Saved {csv_path}")
-    
+
     return csv_path
