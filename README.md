@@ -44,9 +44,9 @@ Saving images and features is done in Python via the `featurescope` module.
 import featurescope
 ```
 
-`featurescope` provides several dataset formatting methods to address different use cases. The method to use depends on whether are computing features on separate **images in a dataset** or on **objects in a labelled image**, and whether you want to **apply a featurizer function** or have **already computed a features dataframe**.
+`featurescope` provides several dataset formatting methods to address different use cases. The method to use depends on whether are computing features on a dataset of images or on objects in a labelled image, and whether you want to apply a featurizer function or have already computed a features dataframe.
 
-> The terms **image dataset**, **featurizer function**, **labelled image** and **features dataframe** are defined [here](https://github.com/MalloryWittwer/featurescope/blob/master/docs/definitions.md).
+> The concepts of **image dataset**, **featurizer**, **labelled image** and **features dataframe** are defined [here](https://github.com/MalloryWittwer/featurescope/blob/master/docs/definitions.md).
 
 Identify which method matches your use case:
 

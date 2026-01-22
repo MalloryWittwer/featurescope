@@ -63,7 +63,7 @@ labelled = label(binary)
 
 - The rows represent images or object instances on which the features are computed.
 - Non-numeric features are ignored, and numeric features are normalized for visualization.
-- You can include columns to identify image files, object labels, or similar (described later).
+- You can include columns to identify image files, object labels, or similar.
 
 Example:
 
