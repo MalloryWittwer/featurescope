@@ -5,4 +5,9 @@ try:
 except ImportError:
     __version__ = "unknown"
 
-from .featurizer import Featurizer
+from .featurizer import (
+    apply_from_images_df,
+    apply_from_label_image_df,
+    apply_to_images,
+    apply_to_label_image,
+)

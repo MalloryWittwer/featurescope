@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image
 from typing import Dict
 
-from featurescope import Featurizer
+from featurescope import apply_to_images
 
 
 # ============================================================================
@@ -112,7 +112,7 @@ def invalid_featurizer_returns_list(image: np.ndarray) -> list:
 
 def test_apply_to_images_empty_directory(temp_images_dir):
     """Test that empty directory returns None."""
-    result = Featurizer.apply_to_images(
+    result = apply_to_images(
         images_dir=temp_images_dir,
         featurizer_func=minmax_featurizer,
     )
@@ -121,7 +121,7 @@ def test_apply_to_images_empty_directory(temp_images_dir):
 
 def test_apply_to_images_with_valid_images(images_dir_with_samples):
     """Test that valid images are processed correctly."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=minmax_featurizer,
     )
@@ -140,7 +140,7 @@ def test_apply_to_images_with_valid_images(images_dir_with_samples):
 
 def test_apply_to_images_ignores_non_image_files(images_dir_with_samples_and_noise):
     """Test that non-image files are ignored."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples_and_noise,
         featurizer_func=minmax_featurizer,
     )
@@ -151,7 +151,7 @@ def test_apply_to_images_ignores_non_image_files(images_dir_with_samples_and_noi
 
 def test_apply_to_images_normalization(images_dir_with_samples):
     """Test that numeric columns are normalized to [0, 1]."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=minmax_featurizer,
     )
@@ -165,7 +165,7 @@ def test_apply_to_images_normalization(images_dir_with_samples):
 
 def test_apply_to_images_with_featurizer_params(images_dir_with_samples):
     """Test that featurizer kwargs are passed correctly."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=param_featurizer,
         threshold=60,
@@ -178,7 +178,7 @@ def test_apply_to_images_with_featurizer_params(images_dir_with_samples):
 
 def test_apply_to_images_mixed_types_drops_non_numeric(images_dir_with_samples):
     """Test that non-numeric values are kept but not normalized."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=mixed_type_featurizer,
     )
@@ -196,7 +196,7 @@ def test_apply_to_images_mixed_types_drops_non_numeric(images_dir_with_samples):
 
 def test_apply_to_images_empty_dict_featurizer(images_dir_with_samples):
     """Test that empty dict featurizer still creates CSV with metadata."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=empty_dict_featurizer,
     )
@@ -211,7 +211,7 @@ def test_apply_to_images_empty_dict_featurizer(images_dir_with_samples):
 def test_apply_to_images_invalid_featurizer_no_image(images_dir_with_samples):
     """Test that featurizer without 'image' parameter raises TypeError."""
     with pytest.raises(TypeError):
-        Featurizer.apply_to_images(
+        apply_to_images(
             images_dir=images_dir_with_samples,
             featurizer_func=invalid_featurizer_no_image,
         )
@@ -220,7 +220,7 @@ def test_apply_to_images_invalid_featurizer_no_image(images_dir_with_samples):
 def test_apply_to_images_invalid_featurizer_returns_none(images_dir_with_samples):
     """Test that featurizer returning None raises TypeError."""
     with pytest.raises(TypeError):
-        Featurizer.apply_to_images(
+        apply_to_images(
             images_dir=images_dir_with_samples,
             featurizer_func=invalid_featurizer_wrong_return,
         )
@@ -229,7 +229,7 @@ def test_apply_to_images_invalid_featurizer_returns_none(images_dir_with_samples
 def test_apply_to_images_invalid_featurizer_returns_list(images_dir_with_samples):
     """Test that featurizer returning non-dict raises TypeError."""
     with pytest.raises(TypeError):
-        Featurizer.apply_to_images(
+        apply_to_images(
             images_dir=images_dir_with_samples,
             featurizer_func=invalid_featurizer_returns_list,
         )
@@ -237,7 +237,7 @@ def test_apply_to_images_invalid_featurizer_returns_list(images_dir_with_samples
 
 def test_apply_to_images_csv_structure(images_dir_with_samples):
     """Test the structure of the saved CSV file."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=minmax_featurizer,
     )
@@ -254,7 +254,7 @@ def test_apply_to_images_csv_structure(images_dir_with_samples):
 
 def test_apply_to_images_thumbnail_encoded(images_dir_with_samples):
     """Test that thumbnails are base64 encoded strings."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=minmax_featurizer,
     )
@@ -275,7 +275,7 @@ def test_apply_to_images_thumbnail_encoded(images_dir_with_samples):
 
 def test_apply_to_images_creates_dataset_csv(images_dir_with_samples):
     """Test that the output file is named 'features.csv'."""
-    csv_path = Featurizer.apply_to_images(
+    csv_path = apply_to_images(
         images_dir=images_dir_with_samples,
         featurizer_func=minmax_featurizer,
     )
