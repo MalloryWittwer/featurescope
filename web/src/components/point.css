@@ -1,5 +1,5 @@
 .point {
-    border-radius: 50%;
+    /* border-radius: 50%; */
     background: #282c34;
     position: absolute;
     display: flex;
