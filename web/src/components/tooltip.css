@@ -5,11 +5,14 @@
   width: 200px;
   height: 200px;
   border: 4px solid #282c34;
+  background-color: black;
 }
 
 .tooltip img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .invisible {
