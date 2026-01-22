@@ -5,5 +5,4 @@ try:
 except ImportError:
     __version__ = "unknown"
 
-from .apply import apply_featurizer
-from .props import apply_dataframe
+from .featurizer import Featurizer
